@@ -593,6 +593,13 @@ function renderModal(){
         <div class="form-group"><label class="form-label">Solde CP (jours)</label><input class="form-input" type="number" id="edit-cp" step="0.5" value="${a.solde_cp}" /></div>
         <div class="form-group"><label class="form-label">Solde RC (heures)</label><input class="form-input" type="number" id="edit-rc" step="0.01" value="${a.solde_rc_heures}" /></div>
         <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" type="text" id="edit-code" value="${a.code_acces}" /></div>
+        <div class="form-group">
+          <label class="form-label">Accès admin</label>
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border:1.5px solid var(--gris-bord);border-radius:10px;background:white">
+            <input type="checkbox" id="edit-admin" ${a.est_responsable?'checked':''} style="width:18px;height:18px;cursor:pointer" />
+            <label for="edit-admin" style="font-size:13px;cursor:pointer;color:var(--texte)">Cet agent peut valider les demandes</label>
+          </div>
+        </div>
         <div class="modal-btns">
           <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
           <button class="btn-primary" style="flex:1" onclick="sauvegarderAgent('${a.id}')">Enregistrer</button>
@@ -672,9 +679,10 @@ async function sauvegarderAgent(id){
   const cp=parseFloat(document.getElementById('edit-cp')?.value);
   const rc=parseFloat(document.getElementById('edit-rc')?.value);
   const code=document.getElementById('edit-code')?.value.trim();
+  const admin = document.getElementById('edit-admin')?.checked||false;
   if(isNaN(cp)||isNaN(rc)||!code) return toast('Remplis tous les champs','err');
   try{
-    await db.patch('agents',`id=eq.${id}`,{equipe:equipe||null,solde_cp:cp,solde_rc_heures:rc,code_acces:code});
+    await db.patch('agents',`id=eq.${id}`,{equipe:equipe||null,solde_cp:cp,solde_rc_heures:rc,code_acces:code,est_responsable:admin});
     toast('✅ Agent mis à jour !','ok'); fermerModal();
     await chargerDonnees(); render();
   }catch(e){toast('Erreur','err');}
