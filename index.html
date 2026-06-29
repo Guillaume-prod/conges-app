@@ -1,15 +1,16 @@
+
 <!DOCTYPE html>
-<!-- saved from url=(0054)https://guillaume-prod.github.io/conges-app/index.html -->
-<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <meta name="theme-color" content="#1a56a0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Congés MLH">
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1a56a0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Congés MLH" />
   <title>Congés – La Poste MLH</title>
-  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Cong%C3%A9s%20%E2%80%93%20La%20Poste%20MLH%22,%22short_name%22:%22Cong%C3%A9s%20MLH%22,%22start_url%22:%22.%2F%22,%22display%22:%22standalone%22,%22background_color%22:%22%231a56a0%22,%22theme_color%22:%22%231a56a0%22}">
-  <script src="./index_files/email.min.js.télécharger"></script>
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Cong%C3%A9s%20%E2%80%93%20La%20Poste%20MLH%22,%22short_name%22:%22Cong%C3%A9s%20MLH%22,%22start_url%22:%22.%2F%22,%22display%22:%22standalone%22,%22background_color%22:%22%231a56a0%22,%22theme_color%22:%22%231a56a0%22}" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -164,17 +165,7 @@
   </style>
 </head>
 <body>
-<div id="app"><div class="login-screen">
-  <div class="login-logo">📬</div>
-  <div class="login-title">Congés – La Poste</div>
-  <div class="login-sub">Mulhouse</div>
-  <div class="login-card">
-    <div class="form-group"><label class="form-label">Ton prénom</label><input class="form-input" id="login-prenom" type="text" placeholder="Ex : Marie" autocomplete="off"></div>
-    <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" id="login-code" type="password" placeholder="••••" autocomplete="off"></div>
-    <div id="login-error" style="color:var(--rouge);font-size:13px;margin-bottom:10px;display:none">❌ Prénom ou code incorrect.</div>
-    <button class="btn-primary" onclick="connexion()">Se connecter</button>
-  </div>
-</div></div>
+<div id="app"></div>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://izxiprwoladxgmfjlyiq.supabase.co';
@@ -801,7 +792,5 @@ async function initDB(){
 }
 initDB();
 </script>
-
-
-
-</body></html>
+</body>
+</html>
