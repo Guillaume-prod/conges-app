@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)https://guillaume-prod.github.io/conges-app/index.html -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="theme-color" content="#1a56a0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Congés MLH">
+  <title>Congés – La Poste MLH</title>
+  <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22Cong%C3%A9s%20%E2%80%93%20La%20Poste%20MLH%22,%22short_name%22:%22Cong%C3%A9s%20MLH%22,%22start_url%22:%22.%2F%22,%22display%22:%22standalone%22,%22background_color%22:%22%231a56a0%22,%22theme_color%22:%22%231a56a0%22}">
+  <script src="./index_files/email.min.js.télécharger"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --jaune: #FFD700; --jaune-pale: #FFF8DC;
+      --bleu: #1a56a0; --bleu-fonce: #0f3a72; --bleu-clair: #e8f0fb;
+      --gris: #f4f6f9; --gris-bord: #dde3ed;
+      --texte: #1a1f2e; --texte-doux: #5a6478;
+      --vert: #16a34a; --vert-pale: #dcfce7;
+      --rouge: #dc2626; --rouge-pale: #fee2e2;
+      --orange: #d97706; --orange-pale: #fef3c7;
+      --violet: #7c3aed; --violet-pale: #ede9fe;
+      --radius: 14px; --ombre: 0 2px 12px rgba(26,86,160,0.10);
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--gris); color: var(--texte); min-height: 100vh; max-width: 480px; margin: 0 auto; }
+
+    .header { background: var(--bleu); padding: 18px 20px 14px; position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; }
+    .header-logo { display: flex; align-items: center; gap: 10px; }
+    .logo-box { width: 36px; height: 36px; background: var(--jaune); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .header-title { color: white; font-weight: 700; font-size: 16px; line-height: 1.1; }
+    .header-sub { color: rgba(255,255,255,0.65); font-size: 11px; }
+    .btn-deconnexion { background: rgba(255,255,255,0.15); border: none; color: white; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+
+    .nav-bas { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: white; border-top: 1px solid var(--gris-bord); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0 8px; gap: 3px; cursor: pointer; border: none; background: none; color: var(--texte-doux); font-size: 10px; font-weight: 500; }
+    .nav-item.active { color: var(--bleu); }
+    .nav-icon { font-size: 22px; }
+
+    .content { padding: 16px 16px 90px; }
+    .card { background: white; border-radius: var(--radius); box-shadow: var(--ombre); padding: 18px; margin-bottom: 14px; }
+    .card-title { font-size: 13px; font-weight: 700; color: var(--texte-doux); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+
+    .soldes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .solde-box { background: var(--bleu-clair); border-radius: 10px; padding: 14px; text-align: center; }
+    .solde-box.rc { background: var(--jaune-pale); }
+    .solde-val { font-size: 28px; font-weight: 800; color: var(--bleu); }
+    .solde-val.negatif { color: var(--rouge); }
+    .solde-box.rc .solde-val { color: var(--orange); }
+    .solde-lbl { font-size: 11px; color: var(--texte-doux); font-weight: 500; margin-top: 2px; }
+
+    .equipe-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 12px; }
+    .equipe-badge.Concentration { background: var(--bleu-clair); color: var(--bleu); }
+    .equipe-badge.Soirée { background: var(--violet-pale); color: var(--violet); }
+    .equipe-badge.Nuit { background: #1a1f2e; color: white; }
+    .equipe-badge.none { background: var(--gris); color: var(--texte-doux); }
+
+    .badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge.en_attente { background: var(--orange-pale); color: var(--orange); }
+    .badge.approuve { background: var(--vert-pale); color: var(--vert); }
+    .badge.refuse { background: var(--rouge-pale); color: var(--rouge); }
+
+    .statut-message { border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.5; margin-top: 10px; }
+    .statut-message.en_attente { background: var(--orange-pale); color: #92400e; border-left: 3px solid var(--orange); }
+    .statut-message.approuve { background: var(--vert-pale); color: #14532d; border-left: 3px solid var(--vert); }
+    .statut-message.refuse { background: var(--rouge-pale); color: #7f1d1d; border-left: 3px solid var(--rouge); }
+
+    .demande-item { border: 1px solid var(--gris-bord); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .demande-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .demande-type { font-weight: 700; font-size: 14px; }
+    .demande-dates { font-size: 12px; color: var(--texte-doux); margin-top: 2px; }
+    .demande-jours { font-size: 20px; font-weight: 800; color: var(--bleu); text-align: right; }
+    .demande-jours span { font-size: 12px; font-weight: 500; color: var(--texte-doux); }
+
+    .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .cal-nav { background: none; border: 1px solid var(--gris-bord); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+    .cal-month { font-weight: 700; font-size: 15px; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-day-name { text-align: center; font-size: 10px; font-weight: 600; color: var(--texte-doux); padding: 4px 0; }
+    .cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-size: 11px; font-weight: 500; cursor: pointer; position: relative; gap: 1px; }
+    .cal-day.vide { cursor: default; }
+    .cal-day.dimanche { color: var(--texte-doux); background: var(--gris); cursor: default; }
+    .cal-day.passe { color: #ccc; cursor: default; }
+    .cal-day.dispo:hover { background: var(--bleu-clair); }
+    .cal-day.selectionne { background: var(--bleu); color: white; }
+    .cal-day.dans-selection { background: var(--bleu-clair); color: var(--bleu); }
+    .cal-day.aujourd-hui { border: 2px solid var(--bleu); font-weight: 800; }
+    .cal-day.complet { background: #fde8e8; color: var(--rouge); cursor: not-allowed; }
+    .cal-day.attention { background: #fef3c7; color: var(--orange); }
+    .cal-compteur { font-size: 8px; font-weight: 700; line-height: 1; }
+
+    .alerte-equipe { border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 12px; }
+    .alerte-equipe.warning { background: var(--orange-pale); color: #92400e; border-left: 3px solid var(--orange); }
+    .alerte-equipe.danger { background: var(--rouge-pale); color: #7f1d1d; border-left: 3px solid var(--rouge); }
+
+    .legende { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .leg-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--texte-doux); }
+    .leg-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--texte-doux); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gris-bord); border-radius: 10px; font-size: 14px; background: white; color: var(--texte); font-family: inherit; outline: none; transition: border-color 0.15s; }
+    .form-input:focus { border-color: var(--bleu); }
+    select.form-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235a6478' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    .type-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .type-btn { padding: 12px; border: 2px solid var(--gris-bord); border-radius: 10px; background: white; font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; color: var(--texte-doux); }
+    .type-btn.active { border-color: var(--bleu); background: var(--bleu-clair); color: var(--bleu); }
+
+    .recap { background: var(--bleu-clair); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+    .recap-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+    .recap-val { font-weight: 700; color: var(--bleu); }
+    .recap-warning { color: var(--rouge); font-size: 12px; margin-top: 8px; font-weight: 600; }
+
+    .btn-primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--bleu); color: white; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .login-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px; background: var(--bleu); }
+    .login-logo { width: 72px; height: 72px; background: var(--jaune); border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 38px; margin-bottom: 16px; }
+    .login-title { color: white; font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .login-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 32px; }
+    .login-card { background: white; border-radius: 18px; padding: 24px; width: 100%; max-width: 360px; }
+
+    .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: #1a1f2e; color: white; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 500; z-index: 999; max-width: 320px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); animation: slideDown 0.2s ease; }
+    .toast.ok { background: var(--vert); }
+    .toast.err { background: var(--rouge); }
+    @keyframes slideDown { from { transform: translateX(-50%) translateY(-10px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
+    .admin-tabs { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; }
+    .admin-tab { flex-shrink: 0; padding: 9px 12px; border-radius: 9px; border: 1.5px solid var(--gris-bord); background: white; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--texte-doux); }
+    .admin-tab.active { border-color: var(--bleu); background: var(--bleu); color: white; }
+
+    .filtre-equipes { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; }
+    .filtre-btn { flex-shrink: 0; padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--gris-bord); background: white; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--texte-doux); }
+    .filtre-btn.active { border-color: var(--bleu); background: var(--bleu-clair); color: var(--bleu); }
+
+    .agent-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--gris); cursor: pointer; }
+    .agent-item:last-child { border-bottom: none; }
+    .agent-name { font-weight: 600; font-size: 14px; }
+    .agent-code { font-size: 11px; color: var(--texte-doux); font-family: monospace; }
+    .agent-soldes { display: flex; gap: 6px; align-items: center; }
+    .solde-chip { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .solde-chip.cp { background: var(--bleu-clair); color: var(--bleu); }
+    .solde-chip.rc { background: var(--jaune-pale); color: var(--orange); }
+
+    .decision-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-sm { flex: 1; padding: 9px; border-radius: 9px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-sm.ok { background: var(--vert-pale); color: var(--vert); }
+    .btn-sm.non { background: var(--rouge-pale); color: var(--rouge); }
+    .commentaire-input { width: 100%; padding: 9px 12px; border: 1.5px solid var(--gris-bord); border-radius: 9px; font-size: 13px; font-family: inherit; margin-top: 8px; outline: none; resize: none; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--texte-doux); font-size: 14px; }
+    .empty-icon { font-size: 40px; margin-bottom: 10px; }
+    .loader { text-align: center; padding: 40px; color: var(--texte-doux); }
+    .info-banner { background: var(--bleu-clair); border-radius: 10px; padding: 11px 14px; font-size: 12px; color: var(--bleu-fonce); margin-bottom: 14px; line-height: 1.5; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
+    .modal { background: white; border-radius: 18px 18px 0 0; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .btn-annuler { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid var(--gris-bord); background: white; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--texte-doux); }
+    .lien-danger { background: none; border: none; color: var(--rouge); font-size: 13px; cursor: pointer; text-decoration: underline; }
+    .changer-mdp-link { text-align: center; margin-top: 14px; }
+    .changer-mdp-link button { background: none; border: none; color: var(--bleu); font-size: 13px; cursor: pointer; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div id="app"><div class="login-screen">
+  <div class="login-logo">📬</div>
+  <div class="login-title">Congés – La Poste</div>
+  <div class="login-sub">Mulhouse</div>
+  <div class="login-card">
+    <div class="form-group"><label class="form-label">Ton prénom</label><input class="form-input" id="login-prenom" type="text" placeholder="Ex : Marie" autocomplete="off"></div>
+    <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" id="login-code" type="password" placeholder="••••" autocomplete="off"></div>
+    <div id="login-error" style="color:var(--rouge);font-size:13px;margin-bottom:10px;display:none">❌ Prénom ou code incorrect.</div>
+    <button class="btn-primary" onclick="connexion()">Se connecter</button>
+  </div>
+</div></div>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://izxiprwoladxgmfjlyiq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_IiZt-3wW_RvKn2eWgyFF7Q_J33ep1RU';
+const EMAILJS_SERVICE = 'service_qtkzz3d';
+const EMAILJS_TEMPLATE = 'template_c98q9t3';
+const EMAILJS_KEY = 'eqbebprUUz1zVz_tv';
+const EQUIPES = ['Concentration', 'Soirée', 'Nuit'];
+const MAX_ABSENTS = 2; // alerte au-delà, blocage à 3
+
+emailjs.init(EMAILJS_KEY);
+
+// ── SUPABASE ────────────────────────────────────────────────────
+async function sbFetch(method, path, body) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : 'return=minimal'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.message||'Erreur'); }
+  const t = await res.text(); return t ? JSON.parse(t) : [];
+}
+const db = {
+  get: (t,q='') => sbFetch('GET',`${t}?${q}`),
+  post: (t,d) => sbFetch('POST',t,d),
+  patch: (t,q,d) => sbFetch('PATCH',`${t}?${q}`,d),
+  delete: (t,q) => sbFetch('DELETE',`${t}?${q}`),
+};
+
+// ── ÉTAT ────────────────────────────────────────────────────────
+let S = {
+  agent:null, vue:'accueil', adminTab:'attente', filtreEquipe:'Toutes',
+  demandes:[], tousAgents:[], toutesDemandesAdmin:[],
+  calMois:new Date().getMonth(), calAnnee:new Date().getFullYear(),
+  selDebut:null, selFin:null, typeAbsence:'CP', motif:'', rcHeures:0,
+  commentaireAdmin:{}, loading:false, modal:null, editAgentId:null,
+};
+
+// ── HELPERS ─────────────────────────────────────────────────────
+function joursOuvres(debut,fin) {
+  if(!debut||!fin) return 0;
+  let n=0; const c=new Date(debut+'T00:00:00'), e=new Date(fin+'T00:00:00');
+  while(c<=e){if(c.getDay()!==0)n++; c.setDate(c.getDate()+1);} return n;
+}
+function fmt(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function fmtCourt(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});}
+function toast(msg,type='ok'){const el=document.createElement('div');el.className=`toast ${type}`;el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3500);}
+
+function statutBadge(s){
+  const c={en_attente:{i:'⏳',l:'En attente'},approuve:{i:'✅',l:'Approuvée'},refuse:{i:'❌',l:'Refusée'}}[s]||{i:'⏳',l:'En attente'};
+  return `<span class="badge ${s}">${c.i} ${c.l}</span>`;
+}
+function statutMessage(d){
+  const m={
+    en_attente:`⏳ <strong>Demande en attente de validation</strong><br>Ta demande a bien été reçue. Le responsable va l'examiner prochainement.`,
+    approuve:`✅ <strong>Demande approuvée !</strong><br>Ton absence du ${fmt(d.date_debut)} au ${fmt(d.date_fin)} est confirmée. Bon repos !`,
+    refuse:`❌ <strong>Demande refusée</strong><br>Ta demande n'a pas pu être accordée.${d.commentaire_resp?`<br><em>Motif : ${d.commentaire_resp}</em>`:''}`,
+  };
+  return `<div class="statut-message ${d.statut}">${m[d.statut]||''}</div>`;
+}
+function equipeBadge(eq){
+  const e=eq||'—'; const cls=EQUIPES.includes(e)?e:'none';
+  const icons={Concentration:'☀️',Soirée:'🌆',Nuit:'🌙'};
+  return `<span class="equipe-badge ${cls}">${icons[e]||'👤'} ${e}</span>`;
+}
+
+// Comptage absents par équipe sur une date donnée
+function absentsEquipeSurDate(dateStr, equipe, agentId) {
+  return S.toutesDemandesAdmin.filter(d =>
+    d.statut === 'approuve' && d.agent_id !== agentId &&
+    dateStr >= d.date_debut && dateStr <= d.date_fin
+  ).filter(d => {
+    const a = S.tousAgents.find(x => x.id === d.agent_id);
+    return a && a.equipe === equipe;
+  }).length;
+}
+
+// Max absents sur une plage de dates pour l'équipe
+function maxAbsentsEquipeSurPlage(debut, fin, equipe, agentId) {
+  if(!debut||!fin) return 0;
+  let max=0; const c=new Date(debut+'T00:00:00'), e=new Date(fin+'T00:00:00');
+  while(c<=e){
+    if(c.getDay()!==0){
+      const ds=c.toISOString().split('T')[0];
+      max=Math.max(max,absentsEquipeSurDate(ds,equipe,agentId));
+    }
+    c.setDate(c.getDate()+1);
+  }
+  return max;
+}
+
+// ── RENDER ──────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+  if(!S.agent){app.innerHTML=renderLogin();return;}
+  app.innerHTML=`${renderHeader()}<div class="content">${S.loading?'<div class="loader">⏳ Chargement...</div>':renderVue()}</div>${renderNav()}${S.modal?renderModal():''}`;
+  attachEvents();
+}
+
+function renderHeader(){return `<header class="header">
+  <div class="header-logo"><div class="logo-box">📬</div>
+  <div><div class="header-title">Congés – La Poste</div><div class="header-sub">${S.agent.prenom} ${S.agent.nom}</div></div></div>
+  <button class="btn-deconnexion" onclick="deconnexion()">Déconnexion</button>
+</header>`;}
+
+function renderNav(){
+  const items=S.agent.est_responsable
+    ?[['accueil','🏠','Accueil'],['demande','📝','Demander'],['mes-demandes','📋','Mes demandes'],['admin','⚙️','Admin']]
+    :[['accueil','🏠','Accueil'],['demande','📝','Demander'],['mes-demandes','📋','Mes demandes']];
+  return `<nav class="nav-bas">${items.map(([v,i,l])=>`<button class="nav-item ${S.vue===v?'active':''}" onclick="changerVue('${v}')"><span class="nav-icon">${i}</span>${l}</button>`).join('')}</nav>`;
+}
+
+function renderVue(){
+  switch(S.vue){
+    case 'accueil': return renderAccueil();
+    case 'demande': return renderDemande();
+    case 'mes-demandes': return renderMesDemandes();
+    case 'admin': return renderAdmin();
+    default: return renderAccueil();
+  }
+}
+
+// ── ACCUEIL ─────────────────────────────────────────────────────
+function renderAccueil(){
+  const recentes=S.demandes.slice(0,3);
+  return `<div class="card">
+    <div class="card-title">Mes soldes</div>
+    ${equipeBadge(S.agent.equipe)}
+    <div class="soldes-grid">
+      <div class="solde-box"><div class="solde-val ${S.agent.solde_cp<0?'negatif':''}">${S.agent.solde_cp}</div><div class="solde-lbl">Congés Payés (jours)</div></div>
+      <div class="solde-box rc"><div class="solde-val ${S.agent.solde_rc_heures<0?'negatif':''}">${S.agent.solde_rc_heures}h</div><div class="solde-lbl">Repos Compensatoire</div></div>
+    </div>
+    <div class="changer-mdp-link"><button onclick="ouvrirChangerCode()">🔑 Changer mon code d'accès</button></div>
+  </div>
+  ${recentes.length?`<div class="card"><div class="card-title">Dernières demandes</div>
+    ${recentes.map(d=>`<div class="demande-item">
+      <div class="demande-header">
+        <div><div class="demande-type">${d.type==='CP'?'🏖️ Congés Payés':'🔄 Repos Compensatoire'}</div>
+        <div class="demande-dates">${fmtCourt(d.date_debut)} → ${fmtCourt(d.date_fin)}</div></div>
+        <div class="demande-jours">${d.jours}<span>${d.type==='RC'?'h':' j'}</span></div>
+      </div>
+      ${statutBadge(d.statut)}${statutMessage(d)}
+    </div>`).join('')}
+  </div>`:`<div class="card"><div class="empty-state"><div class="empty-icon">📭</div>Aucune demande pour l'instant.<br>Appuie sur <strong>Demander</strong> pour commencer.</div></div>`}`;
+}
+
+// ── MES DEMANDES ────────────────────────────────────────────────
+function renderMesDemandes(){
+  if(!S.demandes.length) return `<div class="card"><div class="empty-state"><div class="empty-icon">📭</div>Tu n'as encore fait aucune demande.</div></div>`;
+  return `<div class="card"><div class="card-title">Toutes mes demandes</div>
+    ${S.demandes.map(d=>`<div class="demande-item">
+      <div class="demande-header">
+        <div><div class="demande-type">${d.type==='CP'?'🏖️ Congés Payés':'🔄 Repos Compensatoire'}</div>
+        <div class="demande-dates">${fmt(d.date_debut)} → ${fmt(d.date_fin)}</div>
+        ${d.motif?`<div class="demande-dates" style="font-style:italic">${d.motif}</div>`:''}</div>
+        <div class="demande-jours">${d.jours}<span>${d.type==='RC'?'h':' j'}</span></div>
+      </div>
+      ${statutBadge(d.statut)}${statutMessage(d)}
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── DEMANDE ─────────────────────────────────────────────────────
+function renderDemande(){
+  const today=new Date().toISOString().split('T')[0];
+  const todayDate=new Date(); todayDate.setHours(0,0,0,0);
+  const moisNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const mois=S.calMois,annee=S.calAnnee;
+  const premier=new Date(annee,mois,1).getDay();
+  const decal=premier===0?6:premier-1;
+  const nbJ=new Date(annee,mois+1,0).getDate();
+  const jours=[]; for(let i=0;i<decal;i++)jours.push(null); for(let j=1;j<=nbJ;j++)jours.push(j);
+
+  const equipeAgent=S.agent.equipe;
+  const solde=S.typeAbsence==='CP'?S.agent.solde_cp:S.agent.solde_rc_heures;
+  const joursSelCP=S.typeAbsence==='CP'?joursOuvres(S.selDebut,S.selFin||S.selDebut):0;
+  const depassement=S.typeAbsence==='CP'?joursSelCP>solde:false;
+
+  // Vérification équipe sur la sélection
+  const maxAbsents=S.selDebut&&equipeAgent?maxAbsentsEquipeSurPlage(S.selDebut,S.selFin||S.selDebut,equipeAgent,S.agent.id):0;
+  const bloqueEquipe=maxAbsents>=3;
+  const alerteEquipe=maxAbsents===2;
+
+  // Calcul compteurs par jour pour le calendrier
+  const compteursJour={};
+  if(equipeAgent){
+    const c=new Date(annee,mois,1), e=new Date(annee,mois+1,0);
+    while(c<=e){
+      const ds=c.toISOString().split('T')[0];
+      if(c.getDay()!==0) compteursJour[ds]=absentsEquipeSurDate(ds,equipeAgent,S.agent.id);
+      c.setDate(c.getDate()+1);
+    }
+  }
+
+  return `
+  <div class="card">
+    <div class="card-title">Type d'absence</div>
+    <div class="type-btns">
+      <button class="type-btn ${S.typeAbsence==='CP'?'active':''}" onclick="setType('CP')">🏖️ Congés Payés<br><small style="font-weight:400">${S.agent.solde_cp} j dispo</small></button>
+      <button class="type-btn ${S.typeAbsence==='RC'?'active':''}" onclick="setType('RC')">🔄 Repos Comp.<br><small style="font-weight:400">${S.agent.solde_rc_heures}h dispo</small></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Choisir les dates</div>
+    <div class="info-banner">📌 Appuie sur le 1er jour puis le dernier. Les chiffres indiquent le nombre de collègues de ton équipe déjà absents.</div>
+    <div class="cal-header">
+      <button class="cal-nav" onclick="calPrev()">‹</button>
+      <span class="cal-month">${moisNoms[mois]} ${annee}</span>
+      <button class="cal-nav" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid">
+      ${['Lu','Ma','Me','Je','Ve','Sa','Di'].map(j=>`<div class="cal-day-name">${j}</div>`).join('')}
+      ${jours.map(j=>{
+        if(!j) return `<div class="cal-day vide"></div>`;
+        const ds=`${annee}-${String(mois+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
+        const dObj=new Date(annee,mois,j);
+        const isDim=dObj.getDay()===0;
+        const isPasse=dObj<todayDate;
+        const auj=ds===today;
+        const estDebut=ds===S.selDebut, estFin=ds===S.selFin;
+        const dans=S.selDebut&&S.selFin&&ds>=S.selDebut&&ds<=S.selFin;
+        const cnt=compteursJour[ds]||0;
+
+        let cls='cal-day';
+        if(isDim) cls+=' dimanche';
+        else if(isPasse) cls+=' passe';
+        else if(estDebut||estFin) cls+=' selectionne';
+        else if(dans) cls+=' dans-selection';
+        else if(cnt>=3) cls+=' complet';
+        else if(cnt===2) cls+=' attention';
+        else cls+=' dispo';
+        if(auj) cls+=' aujourd-hui';
+
+        const clk=!isDim&&!isPasse;
+        const cntHtml=cnt>0&&!isDim&&!isPasse?`<span class="cal-compteur">${cnt}</span>`:'';
+        return `<div class="${cls}" ${clk?`onclick="selectDate('${ds}')"`:''}>${j}${cntHtml}</div>`;
+      }).join('')}
+    </div>
+    <div class="legende">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--bleu)"></div>Sélectionné</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fef3c7;border:1px solid var(--orange)"></div>2 absents</div>
+      <div class="leg-item"><div class="leg-dot" style="background:#fde8e8;border:1px solid var(--rouge)"></div>3 absents</div>
+      <div class="leg-item"><div class="leg-dot" style="background:var(--gris)"></div>Dimanche</div>
+    </div>
+  </div>
+
+  ${S.selDebut?`<div class="card">
+    <div class="card-title">Récapitulatif</div>
+    ${alerteEquipe?`<div class="alerte-equipe warning">⚠️ 2 collègues de ton équipe sont déjà absents sur cette période. La validation dépend de l'accord du responsable.</div>`:''}
+    ${bloqueEquipe?`<div class="alerte-equipe danger">🚫 3 collègues ou plus de ton équipe sont déjà absents sur cette période. La demande ne peut pas être soumise.</div>`:''}
+    <div class="recap">
+      <div class="recap-row"><span>Du</span><span class="recap-val">${fmt(S.selDebut)}</span></div>
+      <div class="recap-row"><span>Au</span><span class="recap-val">${fmt(S.selFin||S.selDebut)}</span></div>
+      ${S.typeAbsence==='CP'?`
+      <div class="recap-row"><span>Jours ouvrés</span><span class="recap-val">${joursSelCP} j</span></div>
+      <div class="recap-row"><span>Solde actuel</span><span class="recap-val">${solde} j</span></div>
+      <div class="recap-row"><span>Solde après</span><span class="recap-val" style="color:${depassement?'var(--rouge)':'var(--vert)'}">${solde-joursSelCP} j</span></div>
+      ${depassement?`<div class="recap-warning">⚠️ Solde insuffisant !</div>`:''}
+      `:`
+      <div class="recap-row"><span>Solde actuel</span><span class="recap-val">${solde}h</span></div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Nombre d'heures à poser</label>
+        <input class="form-input" type="number" id="rc-heures" min="0.5" step="0.5" placeholder="Ex : 3.5" value="${S.rcHeures||''}" oninput="S.rcHeures=parseFloat(this.value)||0" />
+      </div>
+      ${S.rcHeures>solde?`<div class="recap-warning">⚠️ Solde insuffisant !</div>`:''}
+      `}
+    </div>
+    <div class="form-group">
+      <label class="form-label">Motif (facultatif)</label>
+      <input class="form-input" type="text" id="motif-input" placeholder="Ex : vacances, récupération..." value="${S.motif}" oninput="S.motif=this.value" />
+    </div>
+    <button class="btn-primary" ${bloqueEquipe||(S.typeAbsence==='CP'&&(depassement||joursSelCP===0))||(S.typeAbsence==='RC'&&(!S.rcHeures||S.rcHeures<=0||S.rcHeures>solde))?'disabled':''} onclick="soumettreDemande()">
+      Soumettre la demande
+    </button>
+  </div>`:''}`;
+}
+
+// ── ADMIN ───────────────────────────────────────────────────────
+function renderAdmin(){
+  if(!S.agent.est_responsable) return `<div class="card"><p>Accès non autorisé.</p></div>`;
+  const attente=S.toutesDemandesAdmin.filter(d=>d.statut==='en_attente');
+  const traitees=S.toutesDemandesAdmin.filter(d=>d.statut!=='en_attente');
+  const filtrees=S.filtreEquipe==='Toutes'?attente:attente.filter(d=>{
+    const a=S.tousAgents.find(x=>x.id===d.agent_id); return a&&a.equipe===S.filtreEquipe;
+  });
+  return `
+  <div class="admin-tabs">
+    <button class="admin-tab ${S.adminTab==='attente'?'active':''}" onclick="setAdminTab('attente')">En attente${attente.length?` (${attente.length})`:''}</button>
+    <button class="admin-tab ${S.adminTab==='traitees'?'active':''}" onclick="setAdminTab('traitees')">Traitées</button>
+    <button class="admin-tab ${S.adminTab==='agents'?'active':''}" onclick="setAdminTab('agents')">Agents</button>
+    <button class="admin-tab ${S.adminTab==='ajouter'?'active':''}" onclick="setAdminTab('ajouter')">➕ Ajouter</button>
+  </div>
+  ${S.adminTab==='attente'?renderAdminAttente(filtrees,attente):''}
+  ${S.adminTab==='traitees'?renderAdminTraitees(traitees):''}
+  ${S.adminTab==='agents'?renderAdminAgents():''}
+  ${S.adminTab==='ajouter'?renderAdminAjouter():''}`;
+}
+
+function renderAdminAttente(filtrees, toutes){
+  return `
+  <div class="filtre-equipes">
+    ${['Toutes','Concentration','Soirée','Nuit'].map(e=>`<button class="filtre-btn ${S.filtreEquipe===e?'active':''}" onclick="setFiltreEquipe('${e}')">${e}</button>`).join('')}
+  </div>
+  ${!filtrees.length?`<div class="card"><div class="empty-state"><div class="empty-icon">✅</div>Aucune demande en attente.</div></div>`:''}
+  ${filtrees.map(d=>{
+    const a=S.tousAgents.find(x=>x.id===d.agent_id);
+    const unite=d.type==='RC'?'h':' j';
+    const maxAbs=maxAbsentsEquipeSurPlage(d.date_debut,d.date_fin,a?.equipe,d.agent_id);
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:700;font-size:15px">${a?.prenom} ${a?.nom}</div>
+          ${equipeBadge(a?.equipe)}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:24px;font-weight:800;color:var(--bleu)">${d.jours}${unite}</div>
+          <div style="font-size:11px;color:var(--texte-doux)">${fmtCourt(d.date_debut)} → ${fmtCourt(d.date_fin)}</div>
+        </div>
+      </div>
+      ${maxAbs>=2?`<div class="alerte-equipe ${maxAbs>=3?'danger':'warning'}">${maxAbs>=3?'🚫':'⚠️'} ${maxAbs} collègue(s) de la même équipe déjà absent(s) sur cette période.</div>`:''}
+      ${d.motif?`<div style="background:var(--gris);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--texte-doux);margin-bottom:8px">📝 ${d.motif}</div>`:''}
+      <div style="font-size:12px;color:var(--texte-doux);margin-bottom:6px">Solde ${d.type} : <strong>${d.type==='CP'?a?.solde_cp+'j':a?.solde_rc_heures+'h'}</strong></div>
+      <textarea class="commentaire-input" placeholder="Commentaire pour l'agent (optionnel)..." rows="2" oninput="S.commentaireAdmin['${d.id}']=this.value">${S.commentaireAdmin[d.id]||''}</textarea>
+      <div class="decision-btns">
+        <button class="btn-sm ok" onclick="decider('${d.id}','approuve')">✓ Approuver</button>
+        <button class="btn-sm non" onclick="decider('${d.id}','refuse')">✕ Refuser</button>
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+function renderAdminTraitees(demandes){
+  if(!demandes.length) return `<div class="card"><div class="empty-state"><div class="empty-icon">📋</div>Aucune demande traitée.</div></div>`;
+  return `<div class="card">${demandes.map(d=>{
+    const a=S.tousAgents.find(x=>x.id===d.agent_id);
+    const unite=d.type==='RC'?'h':' j';
+    return `<div class="demande-item">
+      <div class="demande-header">
+        <div>
+          <div class="demande-type" style="font-size:13px">${a?.prenom} ${a?.nom} ${equipeBadge(a?.equipe)}</div>
+          <div class="demande-dates">${d.type} · ${fmtCourt(d.date_debut)} → ${fmtCourt(d.date_fin)} · ${d.jours}${unite}</div>
+          ${d.commentaire_resp?`<div class="demande-dates">💬 ${d.commentaire_resp}</div>`:''}
+        </div>${statutBadge(d.statut)}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderAdminAgents(){
+  return `<div class="card">
+    <div class="card-title">Agents & soldes</div>
+    <div class="filtre-equipes">
+      ${['Toutes','Concentration','Soirée','Nuit'].map(e=>`<button class="filtre-btn ${S.filtreEquipe===e?'active':''}" onclick="setFiltreEquipe('${e}')">${e}</button>`).join('')}
+    </div>
+    ${S.tousAgents.filter(a=>S.filtreEquipe==='Toutes'||a.equipe===S.filtreEquipe).map(a=>`
+    <div class="agent-item" onclick="ouvrirEditAgent('${a.id}')">
+      <div>
+        <div class="agent-name">${a.prenom} ${a.nom}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+          ${equipeBadge(a.equipe)}
+          <span class="agent-code">Code : ${a.code_acces}</span>
+        </div>
+      </div>
+      <div class="agent-soldes">
+        <span class="solde-chip cp">${a.solde_cp}j</span>
+        <span class="solde-chip rc">${a.solde_rc_heures}h</span>
+        <span style="font-size:16px;color:var(--texte-doux)">›</span>
+      </div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderAdminAjouter(){
+  return `<div class="card">
+    <div class="card-title">Ajouter un agent</div>
+    <div class="form-group"><label class="form-label">Prénom</label><input class="form-input" id="new-prenom" type="text" placeholder="Prénom" /></div>
+    <div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="new-nom" type="text" placeholder="NOM" /></div>
+    <div class="form-group"><label class="form-label">Équipe</label>
+      <select class="form-input" id="new-equipe">
+        <option value="">-- Choisir une équipe --</option>
+        ${EQUIPES.map(e=>`<option value="${e}">${e}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" id="new-code" type="text" placeholder="Ex : 1035" /></div>
+    <div class="form-group"><label class="form-label">Solde CP (jours)</label><input class="form-input" id="new-cp" type="number" step="0.5" value="0" /></div>
+    <div class="form-group"><label class="form-label">Solde RC (heures)</label><input class="form-input" id="new-rc" type="number" step="0.01" value="0" /></div>
+    <button class="btn-primary" onclick="ajouterAgent()">Ajouter l'agent</button>
+  </div>`;
+}
+
+// ── MODAL ───────────────────────────────────────────────────────
+function renderModal(){
+  if(S.modal==='changer-code') return `<div class="modal-overlay" onclick="fermerModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-title">🔑 Changer mon code d'accès</div>
+      <div class="form-group"><label class="form-label">Nouveau code</label><input class="form-input" type="password" id="nouveau-code" /></div>
+      <div class="form-group"><label class="form-label">Confirmer</label><input class="form-input" type="password" id="confirm-code" /></div>
+      <div class="modal-btns">
+        <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
+        <button class="btn-primary" style="flex:1" onclick="changerCode()">Enregistrer</button>
+      </div>
+    </div>
+  </div>`;
+
+  if(S.modal==='edit-agent'){
+    const a=S.tousAgents.find(x=>x.id===S.editAgentId);
+    if(!a) return '';
+    return `<div class="modal-overlay" onclick="fermerModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-title">✏️ ${a.prenom} ${a.nom}</div>
+        <div class="form-group"><label class="form-label">Équipe</label>
+          <select class="form-input" id="edit-equipe">
+            <option value="">-- Sans équipe --</option>
+            ${EQUIPES.map(e=>`<option value="${e}" ${a.equipe===e?'selected':''}>${e}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Solde CP (jours)</label><input class="form-input" type="number" id="edit-cp" step="0.5" value="${a.solde_cp}" /></div>
+        <div class="form-group"><label class="form-label">Solde RC (heures)</label><input class="form-input" type="number" id="edit-rc" step="0.01" value="${a.solde_rc_heures}" /></div>
+        <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" type="text" id="edit-code" value="${a.code_acces}" /></div>
+        <div class="modal-btns">
+          <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
+          <button class="btn-primary" style="flex:1" onclick="sauvegarderAgent('${a.id}')">Enregistrer</button>
+        </div>
+        ${a.id!==S.agent.id?`<div style="margin-top:12px;text-align:center"><button class="lien-danger" onclick="supprimerAgent('${a.id}')">🗑️ Supprimer cet agent</button></div>`:''}
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+// ── ACTIONS ─────────────────────────────────────────────────────
+async function connexion(){
+  const prenom=document.getElementById('login-prenom')?.value.trim();
+  const code=document.getElementById('login-code')?.value.trim();
+  if(!prenom||!code) return;
+  try{
+    const res=await db.get('agents',`prenom=ilike.${encodeURIComponent(prenom)}&code_acces=eq.${encodeURIComponent(code)}&select=*`);
+    if(!res.length){document.getElementById('login-error').style.display='block';return;}
+    S.agent=res[0]; await chargerDonnees(); render();
+  }catch(e){toast('Erreur de connexion','err');}
+}
+
+function deconnexion(){
+  S={...S,agent:null,demandes:[],vue:'accueil',selDebut:null,selFin:null,motif:'',rcHeures:0,modal:null};render();
+}
+
+async function chargerDonnees(){
+  try{
+    const [demandes,agents,toutesD]=await Promise.all([
+      db.get('demandes',`agent_id=eq.${S.agent.id}&order=created_at.desc`),
+      db.get('agents','order=nom.asc'),
+      db.get('demandes','order=created_at.desc'),
+    ]);
+    S.demandes=demandes; S.tousAgents=agents; S.toutesDemandesAdmin=toutesD;
+    const fresh=agents.find(a=>a.id===S.agent.id);
+    if(fresh) S.agent=fresh;
+  }catch(e){toast('Erreur de chargement','err');}
+}
+
+async function changerVue(v){
+  S.vue=v;
+  if(v==='demande'){S.selDebut=null;S.selFin=null;S.motif='';S.rcHeures=0;}
+  S.loading=true;render();
+  await chargerDonnees();
+  S.loading=false;render();
+}
+
+function setType(t){S.typeAbsence=t;S.selDebut=null;S.selFin=null;S.rcHeures=0;render();}
+function calPrev(){if(S.calMois===0){S.calMois=11;S.calAnnee--;}else S.calMois--;render();}
+function calNext(){if(S.calMois===11){S.calMois=0;S.calAnnee++;}else S.calMois++;render();}
+function selectDate(d){
+  if(!S.selDebut||(S.selDebut&&S.selFin)){S.selDebut=d;S.selFin=null;}
+  else{if(d<S.selDebut){S.selFin=S.selDebut;S.selDebut=d;}else S.selFin=d;}
+  render();
+}
+function setAdminTab(t){S.adminTab=t;render();}
+function setFiltreEquipe(e){S.filtreEquipe=e;render();}
+function ouvrirChangerCode(){S.modal='changer-code';render();}
+function ouvrirEditAgent(id){S.editAgentId=id;S.modal='edit-agent';render();}
+function fermerModal(){S.modal=null;render();}
+
+async function changerCode(){
+  const n=document.getElementById('nouveau-code')?.value.trim();
+  const c=document.getElementById('confirm-code')?.value.trim();
+  if(!n) return toast('Saisis un nouveau code','err');
+  if(n!==c) return toast('Les codes ne correspondent pas','err');
+  try{
+    await db.patch('agents',`id=eq.${S.agent.id}`,{code_acces:n});
+    S.agent.code_acces=n; toast('✅ Code modifié !','ok'); fermerModal();
+  }catch(e){toast('Erreur','err');}
+}
+
+async function sauvegarderAgent(id){
+  const equipe=document.getElementById('edit-equipe')?.value||null;
+  const cp=parseFloat(document.getElementById('edit-cp')?.value);
+  const rc=parseFloat(document.getElementById('edit-rc')?.value);
+  const code=document.getElementById('edit-code')?.value.trim();
+  if(isNaN(cp)||isNaN(rc)||!code) return toast('Remplis tous les champs','err');
+  try{
+    await db.patch('agents',`id=eq.${id}`,{equipe:equipe||null,solde_cp:cp,solde_rc_heures:rc,code_acces:code});
+    toast('✅ Agent mis à jour !','ok'); fermerModal();
+    await chargerDonnees(); render();
+  }catch(e){toast('Erreur','err');}
+}
+
+async function ajouterAgent(){
+  const prenom=document.getElementById('new-prenom')?.value.trim();
+  const nom=document.getElementById('new-nom')?.value.trim();
+  const equipe=document.getElementById('new-equipe')?.value||null;
+  const code=document.getElementById('new-code')?.value.trim();
+  const cp=parseFloat(document.getElementById('new-cp')?.value)||0;
+  const rc=parseFloat(document.getElementById('new-rc')?.value)||0;
+  if(!prenom||!nom||!code) return toast('Remplis au moins le prénom, le nom et le code','err');
+  try{
+    await db.post('agents',{prenom,nom,equipe:equipe||null,code_acces:code,solde_cp:cp,solde_rc_heures:rc,est_responsable:false});
+    toast(`✅ ${prenom} ${nom} ajouté !`,'ok');
+    document.getElementById('new-prenom').value='';
+    document.getElementById('new-nom').value='';
+    document.getElementById('new-code').value='';
+    document.getElementById('new-cp').value='0';
+    document.getElementById('new-rc').value='0';
+    await chargerDonnees(); render();
+  }catch(e){toast('Erreur ajout','err');}
+}
+
+async function supprimerAgent(id){
+  if(!confirm('Supprimer définitivement cet agent ?')) return;
+  try{
+    await db.delete('demandes',`agent_id=eq.${id}`);
+    await db.delete('agents',`id=eq.${id}`);
+    toast('Agent supprimé','ok'); fermerModal();
+    await chargerDonnees(); render();
+  }catch(e){toast('Erreur suppression','err');}
+}
+
+async function soumettreDemande(){
+  const equipeAgent=S.agent.equipe;
+  const maxAbs=equipeAgent?maxAbsentsEquipeSurPlage(S.selDebut,S.selFin||S.selDebut,equipeAgent,S.agent.id):0;
+  if(maxAbs>=3) return toast('3 collègues déjà absents sur cette période','err');
+
+  if(S.typeAbsence==='CP'){
+    const jours=joursOuvres(S.selDebut,S.selFin||S.selDebut);
+    if(!jours) return toast('Aucun jour ouvré sélectionné','err');
+    if(jours>S.agent.solde_cp) return toast('Solde CP insuffisant','err');
+    try{
+      await db.post('demandes',{agent_id:S.agent.id,type:'CP',date_debut:S.selDebut,date_fin:S.selFin||S.selDebut,jours,motif:S.motif||null,statut:'en_attente'});
+      await envoyerEmail('CP',jours+'j');
+      toast('✅ Demande envoyée !','ok');
+      S.selDebut=null;S.selFin=null;S.motif='';S.vue='mes-demandes';
+      await chargerDonnees();render();
+    }catch(e){toast('Erreur envoi','err');}
+  }else{
+    const h=S.rcHeures;
+    if(!h||h<=0) return toast("Saisis un nombre d'heures",'err');
+    if(h>S.agent.solde_rc_heures) return toast('Solde RC insuffisant','err');
+    try{
+      await db.post('demandes',{agent_id:S.agent.id,type:'RC',date_debut:S.selDebut,date_fin:S.selFin||S.selDebut,jours:h,motif:S.motif||null,statut:'en_attente'});
+      await envoyerEmail('RC',h+'h');
+      toast('✅ Demande envoyée !','ok');
+      S.selDebut=null;S.selFin=null;S.motif='';S.rcHeures=0;S.vue='mes-demandes';
+      await chargerDonnees();render();
+    }catch(e){toast('Erreur envoi','err');}
+  }
+}
+
+async function envoyerEmail(type, duree){
+  try{
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      prenom: S.agent.prenom,
+      nom: S.agent.nom,
+      equipe: S.agent.equipe||'Non assignée',
+      type: type==='CP'?'Congés Payés':'Repos Compensatoire',
+      date_debut: fmt(S.selDebut),
+      date_fin: fmt(S.selFin||S.selDebut),
+      jours: duree,
+      motif: S.motif||'(aucun)',
+    });
+  }catch(e){ console.warn('Email non envoyé',e); }
+}
+
+async function decider(id,decision){
+  const d=S.toutesDemandesAdmin.find(x=>x.id===id);
+  const commentaire=S.commentaireAdmin[id]||null;
+  try{
+    await db.patch('demandes',`id=eq.${id}`,{statut:decision,commentaire_resp:commentaire});
+    if(decision==='approuve'&&d){
+      const a=S.tousAgents.find(x=>x.id===d.agent_id);
+      if(a){
+        if(d.type==='CP') await db.patch('agents',`id=eq.${d.agent_id}`,{solde_cp:a.solde_cp-d.jours});
+        else await db.patch('agents',`id=eq.${d.agent_id}`,{solde_rc_heures:a.solde_rc_heures-d.jours});
+      }
+    }
+    toast(decision==='approuve'?'✅ Demande approuvée':'❌ Demande refusée','ok');
+    await chargerDonnees();render();
+  }catch(e){toast('Erreur','err');}
+}
+
+function attachEvents(){
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!S.agent)connexion();},{once:true});
+}
+
+function renderLogin(){return `<div class="login-screen">
+  <div class="login-logo">📬</div>
+  <div class="login-title">Congés – La Poste</div>
+  <div class="login-sub">Mulhouse</div>
+  <div class="login-card">
+    <div class="form-group"><label class="form-label">Ton prénom</label><input class="form-input" id="login-prenom" type="text" placeholder="Ex : Marie" autocomplete="off" /></div>
+    <div class="form-group"><label class="form-label">Code d'accès</label><input class="form-input" id="login-code" type="password" placeholder="••••" autocomplete="off" /></div>
+    <div id="login-error" style="color:var(--rouge);font-size:13px;margin-bottom:10px;display:none">❌ Prénom ou code incorrect.</div>
+    <button class="btn-primary" onclick="connexion()">Se connecter</button>
+  </div>
+</div>`;}
+
+// ── INIT ────────────────────────────────────────────────────────
+// Ajouter colonne equipe si pas encore fait
+async function initDB(){
+  try{ await db.patch('agents','id=eq.00000000-0000-0000-0000-000000000000',{equipe:null}); }catch(e){}
+  render();
+}
+initDB();
+</script>
+
+
+
+</body></html>
