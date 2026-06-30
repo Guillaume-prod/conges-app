@@ -265,11 +265,7 @@ function maxAbsentsEquipeSurPlage(debut, fin, equipe, agentId) {
 function render(){
   const app=document.getElementById('app');
   if(!S.agent){app.innerHTML=renderLogin();return;}
-  let modalHtml='';
-  if(S.modal && S.modal.startsWith('evenement-')) modalHtml = renderModalEvenement(S.modal.replace('evenement-',''));
-  else if(S.modal==='compte-rendu') modalHtml = renderModalCompteRendu();
-  else if(S.modal) modalHtml = renderModal();
-  app.innerHTML=`${renderHeader()}<div class="content">${S.loading?'<div class="loader">⏳ Chargement...</div>':renderVue()}</div>${renderNav()}${modalHtml}`;
+  app.innerHTML=`${renderHeader()}<div class="content">${S.loading?'<div class="loader">⏳ Chargement...</div>':renderVue()}</div>${renderNav()}${S.modal?renderModal():''}`;
   attachEvents();
 }
 
@@ -281,8 +277,8 @@ function renderHeader(){return `<header class="header">
 
 function renderNav(){
   const items=S.agent.est_responsable
-    ?[['accueil','🏠','Accueil'],['demande','📝','Demander'],['vacation','🎙️','Vacation'],['acompte','💶','Acompte'],['admin','⚙️','Admin']]
-    :[['accueil','🏠','Accueil'],['demande','📝','Demander'],['vacation','🎙️','Vacation'],['acompte','💶','Acompte']];
+    ?[['accueil','🏠','Accueil'],['demande','📝','Demander'],['acompte','💶','Acompte'],['admin','⚙️','Admin']]
+    :[['accueil','🏠','Accueil'],['demande','📝','Demander'],['acompte','💶','Acompte']];
   return `<nav class="nav-bas">${items.map(([v,i,l])=>`<button class="nav-item ${S.vue===v?'active':''}" onclick="changerVue('${v}')"><span class="nav-icon">${i}</span>${l}</button>`).join('')}</nav>`;
 }
 
@@ -292,7 +288,6 @@ function renderVue(){
     case 'demande': return renderDemande();
     case 'mes-demandes': return renderMesDemandes();
     case 'acompte': return renderAcompte();
-    case 'vacation': return renderVacation();
     case 'admin': return renderAdmin();
     default: return renderAccueil();
   }
@@ -469,7 +464,6 @@ function renderAdmin(){
     <button class="admin-tab ${S.adminTab==='agents'?'active':''}" onclick="setAdminTab('agents')">Agents</button>
     <button class="admin-tab ${S.adminTab==='ajouter'?'active':''}" onclick="setAdminTab('ajouter')">➕ Ajouter</button>
     <button class="admin-tab ${S.adminTab==='acomptes'?'active':''}" onclick="setAdminTab('acomptes')">💶 Acomptes</button>
-    <button class="admin-tab ${S.adminTab==='vacations'?'active':''}" onclick="setAdminTab('vacations')">🎙️ Vacations</button>
     <button class="admin-tab ${S.adminTab==='calendrier'?'active':''}" onclick="setAdminTab('calendrier')">📅 Calendrier</button>
   </div>
   ${S.adminTab==='attente'?renderAdminAttente(filtrees,attente):''}
@@ -477,7 +471,6 @@ function renderAdmin(){
   ${S.adminTab==='agents'?renderAdminAgents():''}
   ${S.adminTab==='ajouter'?renderAdminAjouter():''}
   ${S.adminTab==='acomptes'?renderAdminAcomptes():''}
-  ${S.adminTab==='vacations'?renderAdminVacations():''}
   ${S.adminTab==='calendrier'?renderAdminCalendrier():''}`;
 }
 
@@ -747,8 +740,6 @@ async function changerVue(v){
   S.loading=true;render();
   await chargerDonnees();
   await chargerAcomptes();
-  await chargerVacationEnCours();
-  if(S.agent.est_responsable) await chargerToutesVacations();
   S.loading=false;render();
 }
 
@@ -1003,276 +994,12 @@ function renderAdminAcomptes(){
   </div>`:''}`;
 }
 
-// ── VACATION ────────────────────────────────────────────────────
-const TYPES_EVT = {
-  liaison: {icon:'🚛', label:'Liaison', couleur:'#1a56a0'},
-  colis: {icon:'📦', label:'Colis', couleur:'#d97706'},
-  incident: {icon:'⚠️', label:'Incident', couleur:'#dc2626'},
-  anomalie: {icon:'🔧', label:'Anomalie', couleur:'#7c3aed'},
-};
-
-async function chargerVacationEnCours(){
-  try{
-    const res = await db.get('vacations', `agent_id=eq.${S.agent.id}&statut=eq.en_cours&order=created_at.desc&limit=1`);
-    S.vacationActive = res[0]||null;
-    if(S.vacationActive){
-      S.evenementsVacation = await db.get('evenements_vacation', `vacation_id=eq.${S.vacationActive.id}&order=created_at.asc`);
-    } else {
-      S.evenementsVacation = [];
-    }
-  }catch(e){ S.vacationActive=null; S.evenementsVacation=[]; }
-}
-
-async function demarrerVacation(){
-  try{
-    const res = await db.post('vacations', {agent_id:S.agent.id, equipe:S.agent.equipe||null, statut:'en_cours'});
-    S.vacationActive = res[0];
-    S.evenementsVacation = [];
-    toast('🎙️ Vacation démarrée !','ok');
-    render();
-  }catch(e){ toast('Erreur démarrage','err'); }
-}
-
-function ouvrirSaisieEvenement(type){
-  S.modal = 'evenement-'+type;
-  S.evtTexte = '';
-  S.evtPhoto = null;
-  render();
-}
-
-let recognition = null;
-function demarrerEcoute(targetId){
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SpeechRecognition){ toast('Reconnaissance vocale non disponible sur ce navigateur','err'); return; }
-  recognition = new SpeechRecognition();
-  recognition.lang = 'fr-FR';
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    const el = document.getElementById(targetId);
-    if(el){
-      el.value = (el.value ? el.value+' ' : '') + transcript;
-      S.evtTexte = el.value;
-    }
-  };
-  recognition.onerror = () => toast('Erreur micro, réessaie','err');
-  recognition.start();
-  toast('🎙️ Parle maintenant...','ok');
-}
-
-function gererPhotoEvt(input){
-  const file = input.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => { S.evtPhoto = e.target.result; render(); };
-  reader.readAsDataURL(file);
-}
-
-async function validerEvenement(type){
-  const texte = document.getElementById('evt-texte-input')?.value.trim();
-  if(!texte) return toast('Saisis ou dicte un texte','err');
-  try{
-    await db.post('evenements_vacation', {
-      vacation_id: S.vacationActive.id,
-      type,
-      texte,
-      photo_url: S.evtPhoto||null,
-    });
-    toast('✅ Ajouté !','ok');
-    fermerModal();
-    await chargerVacationEnCours();
-    render();
-  }catch(e){ toast('Erreur ajout','err'); }
-}
-
-async function terminerVacation(){
-  if(!confirm('Terminer la vacation et générer le compte rendu ?')) return;
-  try{
-    await db.patch('vacations', `id=eq.${S.vacationActive.id}`, {statut:'terminee', date_fin:new Date().toISOString()});
-    toast('✅ Vacation terminée, compte rendu généré !','ok');
-    S.vacationTermineeId = S.vacationActive.id;
-    S.vacationActive = null;
-    await chargerVacationEnCours();
-    render();
-  }catch(e){ toast('Erreur','err'); }
-}
-
-function renderVacation(){
-  if(!S.vacationActive){
-    return `<div class="card">
-      <div class="card-title">Compte rendu de vacation</div>
-      <div class="info-banner">🎙️ Démarre ta vacation pour commencer à enregistrer tes liaisons, colis, incidents et anomalies tout au long du service. Tu valideras à la fin.</div>
-      <button class="btn-primary" onclick="demarrerVacation()">▶️ Démarrer ma vacation</button>
-    </div>
-    ${renderHistoriqueVacations()}`;
-  }
-
-  const evts = S.evenementsVacation||[];
-  return `
-  <div class="card">
-    <div class="card-title">Vacation en cours</div>
-    <div class="info-banner">🎙️ Appuie sur un bouton, dicte ou tape ta phrase, valide. Recommence autant de fois que nécessaire pendant ta vacation.</div>
-    <div class="type-btns" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <button class="type-btn" style="border-color:${TYPES_EVT.liaison.couleur}33" onclick="ouvrirSaisieEvenement('liaison')">${TYPES_EVT.liaison.icon} Liaison</button>
-      <button class="type-btn" style="border-color:${TYPES_EVT.colis.couleur}33" onclick="ouvrirSaisieEvenement('colis')">${TYPES_EVT.colis.icon} Colis</button>
-    </div>
-    <div class="type-btns" style="grid-template-columns:1fr 1fr">
-      <button class="type-btn" style="border-color:${TYPES_EVT.incident.couleur}33" onclick="ouvrirSaisieEvenement('incident')">${TYPES_EVT.incident.icon} Incident</button>
-      <button class="type-btn" style="border-color:${TYPES_EVT.anomalie.couleur}33" onclick="ouvrirSaisieEvenement('anomalie')">${TYPES_EVT.anomalie.icon} Anomalie</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Éléments enregistrés (${evts.length})</div>
-    ${!evts.length?`<div class="empty-state"><div class="empty-icon">📭</div>Rien pour l'instant. Utilise les boutons ci-dessus.</div>`:
-      evts.map(e=>{
-        const t=TYPES_EVT[e.type];
-        const heure=new Date(e.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-        return `<div class="demande-item">
-          <div class="demande-header">
-            <div>
-              <div class="demande-type" style="color:${t.couleur}">${t.icon} ${t.label} · ${heure}</div>
-              <div class="demande-dates" style="margin-top:4px">${e.texte}</div>
-            </div>
-          </div>
-          ${e.photo_url?`<img src="${e.photo_url}" style="width:100%;border-radius:8px;margin-top:8px" />`:''}
-        </div>`;
-      }).join('')
-    }
-  </div>
-
-  <div class="card">
-    <button class="btn-primary" style="background:var(--vert)" onclick="terminerVacation()">✅ Terminer la vacation</button>
-  </div>
-  ${renderHistoriqueVacations()}`;
-}
-
-function renderHistoriqueVacations(){
-  return `<div id="historique-vacations-zone"></div>`;
-}
-
-async function afficherDernierCompteRendu(){
-  if(!S.vacationTermineeId) return '';
-  const evts = await db.get('evenements_vacation', `vacation_id=eq.${S.vacationTermineeId}&order=created_at.asc`);
-  return evts;
-}
-
-function renderModalEvenement(type){
-  const t = TYPES_EVT[type];
-  return `<div class="modal-overlay" onclick="fermerModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title" style="color:${t.couleur}">${t.icon} ${t.label}</div>
-      <div class="form-group">
-        <label class="form-label">Dicte ou tape ta phrase</label>
-        <textarea class="form-input commentaire-input" id="evt-texte-input" rows="4" placeholder="Ex : Liaison Strasbourg, arrivée 14h05...">${S.evtTexte||''}</textarea>
-      </div>
-      <button class="btn-annuler" style="width:100%;margin-bottom:10px" onclick="demarrerEcoute('evt-texte-input')">🎙️ Dicter au micro</button>
-      ${(type==='incident'||type==='anomalie')?`
-      <div class="form-group">
-        <label class="form-label">Photo (optionnel)</label>
-        <input type="file" accept="image/*" capture="environment" onchange="gererPhotoEvt(this)" class="form-input" />
-        ${S.evtPhoto?`<img src="${S.evtPhoto}" style="width:100%;border-radius:8px;margin-top:8px" />`:''}
-      </div>`:''}
-      <div class="modal-btns">
-        <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
-        <button class="btn-primary" style="flex:1;background:${t.couleur}" onclick="validerEvenement('${type}')">Ajouter</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-// ── ADMIN VACATIONS ─────────────────────────────────────────────
-async function chargerToutesVacations(){
-  try{
-    S.toutesVacations = await db.get('vacations', 'order=created_at.desc&limit=50');
-  }catch(e){ S.toutesVacations=[]; }
-}
-
-function renderAdminVacations(){
-  const vacations = S.toutesVacations||[];
-  const filtrees = S.filtreEquipe==='Toutes'?vacations:vacations.filter(v=>v.equipe===S.filtreEquipe);
-  return `
-  <div class="filtre-equipes">
-    ${['Toutes','Concentration','Soirée','Nuit'].map(e=>`<button class="filtre-btn ${S.filtreEquipe===e?'active':''}" onclick="setFiltreEquipe('${e}')">${e}</button>`).join('')}
-  </div>
-  ${!filtrees.length?`<div class="card"><div class="empty-state"><div class="empty-icon">🎙️</div>Aucun compte rendu pour l'instant.</div></div>`:
-    filtrees.map(v=>{
-      const agent = S.tousAgents.find(a=>a.id===v.agent_id);
-      const debut = new Date(v.date_debut).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      const fin = v.date_fin?new Date(v.date_fin).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):null;
-      return `<div class="card" onclick="ouvrirCompteRendu('${v.id}')" style="cursor:pointer">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700;font-size:14px">${agent?.prenom} ${agent?.nom}</div>
-            ${equipeBadge(v.equipe)}
-            <div style="font-size:11px;color:var(--texte-doux);margin-top:4px">${debut}${fin?' → '+fin:' · en cours'}</div>
-          </div>
-          <span class="badge ${v.statut==='terminee'?'approuve':'en_attente'}">${v.statut==='terminee'?'✅ Terminée':'🎙️ En cours'}</span>
-        </div>
-      </div>`;
-    }).join('')
-  }
-  ${S.modal==='compte-rendu'?'':''}`;
-}
-
-async function ouvrirCompteRendu(vacationId){
-  try{
-    const evts = await db.get('evenements_vacation', `vacation_id=eq.${vacationId}&order=created_at.asc`);
-    const v = S.toutesVacations.find(x=>x.id===vacationId);
-    S.compteRenduActuel = {vacation:v, evenements:evts};
-    S.modal = 'compte-rendu';
-    render();
-  }catch(e){ toast('Erreur chargement','err'); }
-}
-
-function renderModalCompteRendu(){
-  const cr = S.compteRenduActuel;
-  if(!cr) return '';
-  const agent = S.tousAgents.find(a=>a.id===cr.vacation.agent_id);
-  const parCategorie = {liaison:[],colis:[],incident:[],anomalie:[]};
-  cr.evenements.forEach(e=>{ if(parCategorie[e.type]) parCategorie[e.type].push(e); });
-
-  return `<div class="modal-overlay" onclick="fermerModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-title">📋 Compte rendu — ${agent?.prenom} ${agent?.nom}</div>
-      ${equipeBadge(cr.vacation.equipe)}
-
-      <div class="card-title" style="margin-top:16px">Par catégorie</div>
-      ${Object.entries(parCategorie).map(([type,liste])=>{
-        if(!liste.length) return '';
-        const t=TYPES_EVT[type];
-        return `<div style="margin-bottom:14px">
-          <div style="font-weight:700;font-size:13px;color:${t.couleur};margin-bottom:6px">${t.icon} ${t.label} (${liste.length})</div>
-          ${liste.map(e=>`<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--gris)">${e.texte}${e.photo_url?' 📷':''}</div>`).join('')}
-        </div>`;
-      }).join('')}
-
-      <div class="card-title" style="margin-top:16px">Chronologique</div>
-      ${cr.evenements.map(e=>{
-        const t=TYPES_EVT[e.type];
-        const heure=new Date(e.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-        return `<div style="font-size:13px;padding:6px 0;border-bottom:1px solid var(--gris)"><strong style="color:${t.couleur}">${heure} ${t.icon}</strong> ${e.texte}</div>`;
-      }).join('')}
-
-      <div class="modal-btns">
-        <button class="btn-annuler" style="width:100%" onclick="fermerModal()">Fermer</button>
-      </div>
-    </div>
-  </div>`;
-}
-
 // ── INIT ────────────────────────────────────────────────────────
 async function initDB(){
   S.mesAcomptes = [];
   S.tousAcomptes = [];
-  S.vacationActive = null;
-  S.evenementsVacation = [];
-  S.toutesVacations = [];
   if(S.agent){
     await chargerAcomptes();
-    await chargerVacationEnCours();
-    if(S.agent.est_responsable) await chargerToutesVacations();
   }
   render();
 }
