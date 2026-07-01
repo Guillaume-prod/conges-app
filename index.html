@@ -206,6 +206,7 @@ let S = {
   calMois:new Date().getMonth(), calAnnee:new Date().getFullYear(),
   selDebut:null, selFin:null, typeAbsence:'CP', motif:'', rcHeures:0,
   commentaireAdmin:{}, loading:false, modal:null, editAgentId:null,
+  saisieAgentId:'', saisieType:'CP', saisieDebut:'', saisieFin:'', saisieMotif:'', saisieRcHeures:0,
 };
 
 // ── HELPERS ─────────────────────────────────────────────────────
@@ -466,13 +467,120 @@ function renderAdmin(){
     <button class="admin-tab ${S.adminTab==='ajouter'?'active':''}" onclick="setAdminTab('ajouter')">➕ Ajouter</button>
     <button class="admin-tab ${S.adminTab==='acomptes'?'active':''}" onclick="setAdminTab('acomptes')">💶 Acomptes</button>
     <button class="admin-tab ${S.adminTab==='calendrier'?'active':''}" onclick="setAdminTab('calendrier')">📅 Calendrier</button>
+    <button class="admin-tab ${S.adminTab==='saisie'?'active':''}" onclick="setAdminTab('saisie')">✍️ Saisir</button>
   </div>
   ${S.adminTab==='attente'?renderAdminAttente(filtrees,attente):''}
   ${S.adminTab==='traitees'?renderAdminTraitees(traitees):''}
   ${S.adminTab==='agents'?renderAdminAgents():''}
   ${S.adminTab==='ajouter'?renderAdminAjouter():''}
   ${S.adminTab==='acomptes'?renderAdminAcomptes():''}
-  ${S.adminTab==='calendrier'?renderAdminCalendrier():''}`;
+  ${S.adminTab==='calendrier'?renderAdminCalendrier():''}
+  ${S.adminTab==='saisie'?renderAdminSaisie():''}`;
+}
+
+function renderAdminSaisie(){
+  const today = new Date().toISOString().split('T')[0];
+  return `<div class="card">
+    <div class="card-title">✍️ Saisir une absence pour un agent</div>
+    <div class="info-banner">💡 En tant que responsable, tu peux enregistrer directement une absence. La superposition d'équipe n'est pas bloquée pour les saisies admin.</div>
+
+    <div class="form-group">
+      <label class="form-label">Agent</label>
+      <select class="form-input" id="saisie-agent" onchange="S.saisieAgentId=this.value">
+        <option value="">-- Choisir un agent --</option>
+        ${S.tousAgents.filter(a=>!a.est_responsable).map(a=>`
+          <option value="${a.id}">${a.prenom} ${a.nom} ${a.equipe?'('+a.equipe+')':''}</option>
+        `).join('')}
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Type d'absence</label>
+      <div class="type-btns">
+        <button class="type-btn ${S.saisieType==='CP'?'active':''}" onclick="S.saisieType='CP';render()">🏖️ Congés Payés</button>
+        <button class="type-btn ${S.saisieType==='RC'?'active':''}" onclick="S.saisieType='RC';render()">🔄 Repos Comp.</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group">
+        <label class="form-label">Date début</label>
+        <input class="form-input" type="date" id="saisie-debut" min="${today}" onchange="S.saisieDebut=this.value" value="${S.saisieDebut||''}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date fin</label>
+        <input class="form-input" type="date" id="saisie-fin" min="${S.saisieDebut||today}" onchange="S.saisieFin=this.value" value="${S.saisieFin||''}" />
+      </div>
+    </div>
+
+    ${S.saisieType==='RC'?`
+    <div class="form-group">
+      <label class="form-label">Nombre d'heures RC</label>
+      <input class="form-input" type="number" id="saisie-rc-heures" step="0.5" min="0.5" placeholder="Ex : 3.5" onchange="S.saisieRcHeures=parseFloat(this.value)||0" value="${S.saisieRcHeures||''}" />
+    </div>`:''}
+
+    ${S.saisieDebut&&S.saisieFin?`
+    <div class="recap" style="margin-bottom:14px">
+      <div class="recap-row"><span>Jours ouvrés</span><span class="recap-val">${joursOuvres(S.saisieDebut,S.saisieFin)} j</span></div>
+    </div>`:''}
+
+    <div class="form-group">
+      <label class="form-label">Motif (optionnel)</label>
+      <input class="form-input" type="text" id="saisie-motif" placeholder="Ex : congés posés d'office..." onchange="S.saisieMotif=this.value" value="${S.saisieMotif||''}" />
+    </div>
+
+    <button class="btn-primary" onclick="validerSaisieAdmin()">✍️ Enregistrer l'absence</button>
+  </div>`;
+}
+
+async function validerSaisieAdmin(){
+  const agentId = document.getElementById('saisie-agent')?.value || S.saisieAgentId;
+  const debut = document.getElementById('saisie-debut')?.value || S.saisieDebut;
+  const fin = document.getElementById('saisie-fin')?.value || S.saisieFin;
+  const motif = document.getElementById('saisie-motif')?.value?.trim() || S.saisieMotif || null;
+
+  if(!agentId) return toast('Choisis un agent','err');
+  if(!debut||!fin) return toast('Indique les dates','err');
+  if(new Date(fin)<new Date(debut)) return toast('La date de fin doit être après le début','err');
+
+  const agent = S.tousAgents.find(a=>a.id===agentId);
+  let jours;
+
+  if(S.saisieType==='RC'){
+    const h = parseFloat(document.getElementById('saisie-rc-heures')?.value)||S.saisieRcHeures||0;
+    if(!h||h<=0) return toast('Indique le nombre d'heures RC','err');
+    jours = h;
+  } else {
+    jours = joursOuvres(debut, fin);
+    if(!jours) return toast('Aucun jour ouvré sur cette période','err');
+  }
+
+  try{
+    // Enregistrer la demande directement comme approuvée (bypass superposition)
+    await db.post('demandes',{
+      agent_id: agentId,
+      type: S.saisieType||'CP',
+      date_debut: debut,
+      date_fin: fin,
+      jours,
+      motif,
+      statut: 'approuve',
+      commentaire_resp: 'Saisie directe par le responsable',
+    });
+
+    // Déduire du solde
+    if(S.saisieType==='RC'){
+      await db.patch('agents',`id=eq.${agentId}`,{solde_rc_heures: Math.max(-99, (agent?.solde_rc_heures||0) - jours)});
+    } else {
+      await db.patch('agents',`id=eq.${agentId}`,{solde_cp: Math.max(-99, (agent?.solde_cp||0) - jours)});
+    }
+
+    toast(`✅ Absence de ${agent?.prenom} enregistrée !`,'ok');
+    // Reset form
+    S.saisieAgentId=''; S.saisieDebut=''; S.saisieFin=''; S.saisieMotif=''; S.saisieRcHeures=0; S.saisieType='CP';
+    await chargerDonnees();
+    render();
+  }catch(e){ toast('Erreur: '+e.message,'err'); }
 }
 
 function renderAdminCalendrier(){
