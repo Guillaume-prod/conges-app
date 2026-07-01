@@ -505,13 +505,14 @@ function renderAdminSaisie(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="form-group">
         <label class="form-label">Date début</label>
-        <input class="form-input" type="date" id="saisie-debut" onchange="S.saisieDebut=this.value" value="${S.saisieDebut||''}" />
+        <input class="form-input" type="date" id="saisie-debut" max="2099-12-31" onchange="S.saisieDebut=this.value" value="${S.saisieDebut||''}" />
       </div>
       <div class="form-group">
         <label class="form-label">Date fin</label>
-        <input class="form-input" type="date" id="saisie-fin" onchange="S.saisieFin=this.value" value="${S.saisieFin||''}" />
+        <input class="form-input" type="date" id="saisie-fin" max="2099-12-31" onchange="S.saisieFin=this.value" value="${S.saisieFin||''}" />
       </div>
     </div>
+    <div class="info-banner" style="margin-bottom:10px">💡 Pour saisir une date passée, tape-la directement au clavier : <strong>JJ/MM/AAAA</strong></div>
 
     ${S.saisieType==='RC'?`
     <div class="form-group">
