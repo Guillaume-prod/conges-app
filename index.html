@@ -548,7 +548,7 @@ async function validerSaisieAdmin(){
 
   if(S.saisieType==='RC'){
     const h = parseFloat(document.getElementById('saisie-rc-heures')?.value)||S.saisieRcHeures||0;
-    if(!h||h<=0) return toast('Indique le nombre d'heures RC','err');
+    if(!h||h<=0) return toast("Indique le nombre d'heures RC",'err');
     jours = h;
   } else {
     jours = joursOuvres(debut, fin);
