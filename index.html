@@ -906,7 +906,7 @@ function toggleApp(){
     localStorage.removeItem('conges_app_disabled');
     toast('✅ Application réactivée !','ok');
   } else {
-    if(!confirm('Désactiver l'application ? Les agents ne pourront plus se connecter.')) return;
+    if(!confirm("Désactiver l'application ? Les agents ne pourront plus se connecter.")) return;
     localStorage.setItem('conges_app_disabled','true');
     toast('🔴 Application désactivée','ok');
   }
